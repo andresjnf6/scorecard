@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scorecard Semanal — Comité Estratégico</title>
+<style>
+  :root{
+    --navy:#1F3864;
+    --blue-head:#2E5F9A;
+    --blue-soft:#D6E4F7;
+    --grey-soft:#F2F2F2;
+    --green-bg:#D4EDDA; --green-tx:#1E7E34;
+    --amber-bg:#FFF3CD; --amber-tx:#856404;
+    --red-bg:#F8D7DA;   --red-tx:#842029;
+    --nd-bg:#ECECEC;    --nd-tx:#6C757D;
+    --border:#c9d3e0;
+    --row-alt:#F7FAFF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:#e9edf3; color:#1a1a1a;
+    font-family:Arial, "Segoe UI", Helvetica, sans-serif; font-size:13px;
+  }
+  .wrap{max-width:1500px; margin:18px auto; padding:0 16px 60px;}
+
+  /* Toolbar */
+  .toolbar{
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+    margin-bottom:12px;
+  }
+  .toolbar .spacer{flex:1;}
+  button.tb{
+    border:1px solid var(--navy); background:#fff; color:var(--navy);
+    padding:8px 14px; border-radius:6px; font-size:12px; font-weight:bold;
+    cursor:pointer; transition:.15s;
+  }
+  button.tb:hover{background:var(--navy); color:#fff;}
+  button.tb.primary{background:var(--navy); color:#fff;}
+  button.tb.primary:hover{background:#152847;}
+
+  .card{background:#fff; border-radius:10px; overflow:hidden;
+        box-shadow:0 2px 14px rgba(20,40,70,.12);}
+
+  /* Title bar */
+  .title-bar{
+    background:var(--navy); color:#fff; text-align:center;
+    padding:14px 12px; font-size:16px; font-weight:bold; letter-spacing:.3px;
+  }
+
+  /* meta strip */
+  .meta{
+    display:flex; flex-wrap:wrap; gap:24px; align-items:center;
+    background:var(--grey-soft); padding:10px 16px; font-size:12px;
+    border-bottom:1px solid var(--border);
+  }
+  .meta label{font-weight:bold; margin-right:6px;}
+  .meta input{
+    border:1px solid #bcbcbc; border-radius:4px; padding:4px 8px; font-size:12px;
+    font-family:inherit; min-width:150px;
+  }
+
+  /* legend */
+  .legend{
+    display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+    padding:8px 16px; font-size:11px; border-bottom:1px solid var(--border);
+    background:#fff;
+  }
+  .legend .lbl{font-weight:bold; margin-right:4px;}
+  .chip{
+    padding:3px 9px; border-radius:12px; font-weight:bold; font-size:11px;
+    white-space:nowrap;
+  }
+  .chip.meta-ok{background:var(--green-bg); color:var(--green-tx);}
+  .chip.risk{background:var(--amber-bg); color:var(--amber-tx);}
+  .chip.fail{background:var(--red-bg); color:var(--red-tx);}
+  .chip.nd{background:var(--nd-bg); color:var(--nd-tx);}
+
+  /* table */
+  .scroll{overflow-x:auto;}
+  table{border-collapse:collapse; width:100%; font-size:12px; min-width:1200px;}
+  thead th{
+    background:var(--blue-head); color:#fff; font-weight:bold;
+    padding:7px 6px; text-align:center; border:1px solid #24518a;
+    position:sticky; top:0; z-index:2; white-space:nowrap;
+  }
+  thead th.sub{background:#3a6cad; font-size:11px; padding:4px 5px;}
+  td{border:1px solid var(--border); padding:4px 6px; text-align:center;
+     vertical-align:middle;}
+  td.kpi-name{
+    text-align:left; font-weight:bold; background:#fff; min-width:190px;
+    line-height:1.2;
+  }
+  td.clave{font-weight:bold; color:var(--navy); background:#fff; width:46px;}
+  td.franq{text-align:left; padding-left:10px; min-width:90px;}
+  td.total-row{font-weight:bold; background:var(--blue-soft);}
+  td.num{font-variant-numeric:tabular-nums; white-space:nowrap;}
+  td.meta-col{font-weight:bold;}
+  tbody tr:hover td:not(.kpi-name):not(.clave){background:#eef4ff;}
+
+  /* week input cells */
+  input.wk{
+    width:52px; border:1px solid transparent; background:transparent;
+    text-align:center; font-size:12px; font-family:inherit; padding:3px 2px;
+    border-radius:4px;
+  }
+  input.wk:focus{border-color:var(--blue-head); background:#fff; outline:none;}
+  td.wkcell{background:#fff; padding:1px;}
+  td.wkcell.filled{background:#fbfdff;}
+
+  /* status pill */
+  .status-pill{
+    display:inline-block; min-width:22px; padding:3px 8px; border-radius:10px;
+    font-weight:bold; font-size:12px;
+  }
+  .status-pill.meta-ok{background:var(--green-bg); color:var(--green-tx);}
+  .status-pill.risk{background:var(--amber-bg); color:var(--amber-tx);}
+  .status-pill.fail{background:var(--red-bg); color:var(--red-tx);}
+  .status-pill.nd{background:var(--nd-bg); color:var(--nd-tx);}
+
+  td.prom, td.pct{font-weight:bold; font-variant-numeric:tabular-nums;}
+
+  /* footer total */
+  tfoot td{
+    background:var(--navy); color:#fff; font-weight:bold; padding:10px;
+    font-size:13px; text-align:left;
+  }
+  tfoot td.count{text-align:center; font-size:14px;}
+
+  .note{font-size:11px; color:#6b7280; margin-top:10px; line-height:1.5;}
+  @media print{
+    body{background:#fff;} .toolbar{display:none;}
+    .card{box-shadow:none;}
+    thead th{position:static;}
+  }
+</style>
+<link rel="stylesheet" href="chrome-extension://jmnhicbkdlfeaimeidnpbbmgbgfobpel/app/content-style.css"></head>
+<body>
+<div class="wrap">
+
+  <div class="toolbar">
+    <button class="tb primary" onclick="saveData()">💾 Guardar cambios</button>
+    <button class="tb" onclick="exportJSON()">⬇️ Exportar datos (JSON)</button>
+    <button class="tb" onclick="document.getElementById('imp').click()">⬆️ Importar datos</button>
+    <input type="file" id="imp" accept="application/json" style="display:none" onchange="importJSON(event)">
+    <button class="tb" onclick="window.print()">🖨️ Imprimir / PDF</button>
+    <button class="tb primary" onclick="generarPublicable()">🌐 Generar link (solo lectura)</button>
+    <span class="spacer"></span>
+    <button class="tb" onclick="resetData()">↺ Limpiar semanas</button>
+  </div>
+
+  <div class="card">
+    <div class="title-bar" id="titleBar">SCORECARD SEMANAL — COMITÉ ESTRATÉGICO  |  VISTA TRIMESTRAL (13 SEMANAS)</div>
+
+    <div class="meta">
+      <div><label>Trimestre / Período:</label>
+        <input id="periodo" placeholder="Ej. Q3 2025" oninput="markDirty()"></div>
+      <div><label>Fecha de revisión:</label>
+        <input id="fecha" type="date" oninput="markDirty()"></div>
+    </div>
+
+    <div class="legend">
+      <span class="lbl">Semáforo:</span>
+      <span class="chip meta-ok">✅ En Meta</span>
+      <span class="chip risk">⚠️ En Riesgo</span>
+      <span class="chip fail">❌ Fuera de Meta</span>
+      <span class="chip nd">— Sin datos</span>
+    </div>
+
+    <div class="scroll">
+      <table id="scorecard">
+        <thead>
+          <tr>
+            <th rowspan="2">Objetivo / KPI</th>
+            <th rowspan="2">Clave</th>
+            <th rowspan="2">Franquicia</th>
+            <th rowspan="2">Resultado<br>Anual</th>
+            <th rowspan="2">Resultado<br>Q1 ant.</th>
+            <th rowspan="2">Resultado<br>Q2 ant.</th>
+            <th rowspan="2">Meta<br>Q3</th>
+            <th rowspan="2">Responsable</th>
+            <th colspan="13">SEMANAS</th>
+            <th rowspan="2">Promedio<br>Trim.</th>
+            <th rowspan="2">% vs<br>Meta</th>
+            <th rowspan="2">Estado</th>
+          </tr>
+          <tr id="weekHeadRow"><th class="sub">S1</th><th class="sub">S2</th><th class="sub">S3</th><th class="sub">S4</th><th class="sub">S5</th><th class="sub">S6</th><th class="sub">S7</th><th class="sub">S8</th><th class="sub">S9</th><th class="sub">S10</th><th class="sub">S11</th><th class="sub">S12</th><th class="sub">S13</th></tr>
+        </thead>
+        <tbody id="tbody"><tr><td class="kpi-name" rowspan="5">Indice de productividad</td><td class="clave" rowspan="5">IP</td><td class="franq total-row">Total</td><td class="num total-row">—</td><td class="num total-row">—</td><td class="num total-row">—</td><td class="meta-col total-row">83.5%</td><td class="total-row">—</td><td class="wkcell filled"><input class="wk" value="0.8254" data-key="0-0" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.819" data-key="0-0" data-w="1"></td><td class="wkcell filled"><input class="wk" value="0.8014" data-key="0-0" data-w="2"></td><td class="wkcell filled"><input class="wk" value="0.7727" data-key="0-0" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="0-0" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="0-0" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="0-0" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="0-0" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="0-0" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="0-0" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="0-0" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="0-0" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="0-0" data-w="12"></td><td class="prom" data-prom="0-0">80.5%</td><td class="pct" data-pct="0-0">96%</td><td data-status="0-0"><span class="status-pill risk">⚠️</span></td></tr><tr><td class="franq ">México</td><td class="num ">80.2%</td><td class="num ">77.4%</td><td class="num ">73.2%</td><td class="meta-col ">82.4%</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="0.8203" data-key="0-1" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.8107" data-key="0-1" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="0-1" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="0-1" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="0-1" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="0-1" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="0-1" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="0-1" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="0-1" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="0-1" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="0-1" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="0-1" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="0-1" data-w="12"></td><td class="prom" data-prom="0-1">81.5%</td><td class="pct" data-pct="0-1">99%</td><td data-status="0-1"><span class="status-pill risk">⚠️</span></td></tr><tr><td class="franq ">Perú</td><td class="num ">88.7%</td><td class="num ">85.8%</td><td class="num ">82.2%</td><td class="meta-col ">86.5%</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="0.8664" data-key="0-2" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.8588" data-key="0-2" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="0-2" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="0-2" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="0-2" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="0-2" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="0-2" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="0-2" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="0-2" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="0-2" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="0-2" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="0-2" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="0-2" data-w="12"></td><td class="prom" data-prom="0-2">86.3%</td><td class="pct" data-pct="0-2">100%</td><td data-status="0-2"><span class="status-pill risk">⚠️</span></td></tr><tr><td class="franq ">Colombia</td><td class="num ">73.0%</td><td class="num ">70.7%</td><td class="num ">69.8%</td><td class="meta-col ">78.7%</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="0.7868" data-key="0-3" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.7865" data-key="0-3" data-w="1"></td><td class="wkcell filled"><input class="wk" value="0.7908" data-key="0-3" data-w="2"></td><td class="wkcell filled"><input class="wk" value="0.7458" data-key="0-3" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="0-3" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="0-3" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="0-3" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="0-3" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="0-3" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="0-3" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="0-3" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="0-3" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="0-3" data-w="12"></td><td class="prom" data-prom="0-3">77.7%</td><td class="pct" data-pct="0-3">99%</td><td data-status="0-3"><span class="status-pill risk">⚠️</span></td></tr><tr><td class="franq ">Filipinas</td><td class="num ">94.7%</td><td class="num ">90.2%</td><td class="num ">78.5%</td><td class="meta-col ">86.2%</td><td class="">ZULMA VILLAR</td><td class="wkcell filled"><input class="wk" value="0.8281" data-key="0-4" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.82" data-key="0-4" data-w="1"></td><td class="wkcell filled"><input class="wk" value="0.812" data-key="0-4" data-w="2"></td><td class="wkcell filled"><input class="wk" value="0.7996" data-key="0-4" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="0-4" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="0-4" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="0-4" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="0-4" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="0-4" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="0-4" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="0-4" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="0-4" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="0-4" data-w="12"></td><td class="prom" data-prom="0-4">81.5%</td><td class="pct" data-pct="0-4">95%</td><td data-status="0-4"><span class="status-pill risk">⚠️</span></td></tr><tr><td class="kpi-name" rowspan="5">IP Digital</td><td class="clave" rowspan="5">IPD</td><td class="franq total-row">Total</td><td class="num total-row">88.1%</td><td class="num total-row">86.9%</td><td class="num total-row">85.6%</td><td class="meta-col total-row">86.3%</td><td class="total-row">ZULMA VILLAR</td><td class="wkcell filled"><input class="wk" value="0.8494" data-key="1-0" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.8431" data-key="1-0" data-w="1"></td><td class="wkcell filled"><input class="wk" value="0.8014" data-key="1-0" data-w="2"></td><td class="wkcell filled"><input class="wk" value="0.7727" data-key="1-0" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="1-0" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="1-0" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="1-0" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="1-0" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="1-0" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="1-0" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="1-0" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="1-0" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="1-0" data-w="12"></td><td class="prom" data-prom="1-0">81.7%</td><td class="pct" data-pct="1-0">95%</td><td data-status="1-0"><span class="status-pill risk">⚠️</span></td></tr><tr><td class="franq ">México</td><td class="num ">88.1%</td><td class="num ">86.9%</td><td class="num ">85.6%</td><td class="meta-col ">86.3%</td><td class="">ZULMA VILLAR</td><td class="wkcell filled"><input class="wk" value="0.8607" data-key="1-1" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.8502" data-key="1-1" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="1-1" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="1-1" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="1-1" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="1-1" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="1-1" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="1-1" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="1-1" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="1-1" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="1-1" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="1-1" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="1-1" data-w="12"></td><td class="prom" data-prom="1-1">85.5%</td><td class="pct" data-pct="1-1">99%</td><td data-status="1-1"><span class="status-pill risk">⚠️</span></td></tr><tr><td class="franq ">Perú</td><td class="num ">0.0%</td><td class="num ">0.0%</td><td class="num ">0.0%</td><td class="meta-col ">—</td><td class="">—</td><td class="wkcell filled"><input class="wk" value="0.9218" data-key="1-2" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.9156" data-key="1-2" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="1-2" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="1-2" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="1-2" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="1-2" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="1-2" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="1-2" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="1-2" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="1-2" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="1-2" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="1-2" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="1-2" data-w="12"></td><td class="prom" data-prom="1-2">91.9%</td><td class="pct" data-pct="1-2">—</td><td data-status="1-2"><span class="status-pill nd">—</span></td></tr><tr><td class="franq ">Colombia</td><td class="num ">0.0%</td><td class="num ">0.0%</td><td class="num ">0.0%</td><td class="meta-col ">—</td><td class="">—</td><td class="wkcell filled"><input class="wk" value="0.7868" data-key="1-3" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.7865" data-key="1-3" data-w="1"></td><td class="wkcell filled"><input class="wk" value="0.7908" data-key="1-3" data-w="2"></td><td class="wkcell filled"><input class="wk" value="0.7458" data-key="1-3" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="1-3" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="1-3" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="1-3" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="1-3" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="1-3" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="1-3" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="1-3" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="1-3" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="1-3" data-w="12"></td><td class="prom" data-prom="1-3">77.7%</td><td class="pct" data-pct="1-3">—</td><td data-status="1-3"><span class="status-pill nd">—</span></td></tr><tr><td class="franq ">Filipinas</td><td class="num ">0.0%</td><td class="num ">0.0%</td><td class="num ">0.0%</td><td class="meta-col ">—</td><td class="">—</td><td class="wkcell filled"><input class="wk" value="0.8281" data-key="1-4" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.82" data-key="1-4" data-w="1"></td><td class="wkcell filled"><input class="wk" value="0.812" data-key="1-4" data-w="2"></td><td class="wkcell filled"><input class="wk" value="0.7996" data-key="1-4" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="1-4" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="1-4" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="1-4" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="1-4" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="1-4" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="1-4" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="1-4" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="1-4" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="1-4" data-w="12"></td><td class="prom" data-prom="1-4">81.5%</td><td class="pct" data-pct="1-4">—</td><td data-status="1-4"><span class="status-pill nd">—</span></td></tr><tr><td class="kpi-name" rowspan="5">Crecimiento en clientes vigentes</td><td class="clave" rowspan="5">CCV</td><td class="franq total-row">Total</td><td class="num total-row">351,865</td><td class="num total-row">366,994</td><td class="num total-row">367,109</td><td class="meta-col total-row">394,213</td><td class="total-row">—</td><td class="wkcell filled"><input class="wk" value="363372" data-key="2-0" data-w="0"></td><td class="wkcell filled"><input class="wk" value="360637" data-key="2-0" data-w="1"></td><td class="wkcell filled"><input class="wk" value="22139" data-key="2-0" data-w="2"></td><td class="wkcell filled"><input class="wk" value="23646" data-key="2-0" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="2-0" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="2-0" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="2-0" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="2-0" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="2-0" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="2-0" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="2-0" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="2-0" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="2-0" data-w="12"></td><td class="prom" data-prom="2-0">23,646</td><td class="pct" data-pct="2-0">6%</td><td data-status="2-0"><span class="status-pill fail">❌</span></td></tr><tr><td class="franq ">México</td><td class="num ">282,246</td><td class="num ">294,328</td><td class="num ">293,885</td><td class="meta-col ">311,385</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="290876" data-key="2-1" data-w="0"></td><td class="wkcell filled"><input class="wk" value="288279" data-key="2-1" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="2-1" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="2-1" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="2-1" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="2-1" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="2-1" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="2-1" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="2-1" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="2-1" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="2-1" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="2-1" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="2-1" data-w="12"></td><td class="prom" data-prom="2-1">288,279</td><td class="pct" data-pct="2-1">93%</td><td data-status="2-1"><span class="status-pill risk">⚠️</span></td></tr><tr><td class="franq ">Perú</td><td class="num ">48,916</td><td class="num ">49,965</td><td class="num ">48,944</td><td class="meta-col ">51,972</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="48382" data-key="2-2" data-w="0"></td><td class="wkcell filled"><input class="wk" value="47985" data-key="2-2" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="2-2" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="2-2" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="2-2" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="2-2" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="2-2" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="2-2" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="2-2" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="2-2" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="2-2" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="2-2" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="2-2" data-w="12"></td><td class="prom" data-prom="2-2">47,985</td><td class="pct" data-pct="2-2">92%</td><td data-status="2-2"><span class="status-pill risk">⚠️</span></td></tr><tr><td class="franq ">Colombia</td><td class="num ">15,975</td><td class="num ">15,355</td><td class="num ">15,675</td><td class="meta-col ">18,380</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="15518" data-key="2-3" data-w="0"></td><td class="wkcell filled"><input class="wk" value="15697" data-key="2-3" data-w="1"></td><td class="wkcell filled"><input class="wk" value="13420" data-key="2-3" data-w="2"></td><td class="wkcell filled"><input class="wk" value="15022" data-key="2-3" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="2-3" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="2-3" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="2-3" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="2-3" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="2-3" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="2-3" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="2-3" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="2-3" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="2-3" data-w="12"></td><td class="prom" data-prom="2-3">15,022</td><td class="pct" data-pct="2-3">82%</td><td data-status="2-3"><span class="status-pill fail">❌</span></td></tr><tr><td class="franq ">Filipinas</td><td class="num ">3,828</td><td class="num ">7,346</td><td class="num ">8,605</td><td class="meta-col ">12,476</td><td class="">ZULMA VILLAR</td><td class="wkcell filled"><input class="wk" value="8596" data-key="2-4" data-w="0"></td><td class="wkcell filled"><input class="wk" value="8676" data-key="2-4" data-w="1"></td><td class="wkcell filled"><input class="wk" value="8719" data-key="2-4" data-w="2"></td><td class="wkcell filled"><input class="wk" value="8624" data-key="2-4" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="2-4" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="2-4" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="2-4" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="2-4" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="2-4" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="2-4" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="2-4" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="2-4" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="2-4" data-w="12"></td><td class="prom" data-prom="2-4">8,624</td><td class="pct" data-pct="2-4">69%</td><td data-status="2-4"><span class="status-pill fail">❌</span></td></tr><tr><td class="kpi-name" rowspan="5">Indice de cobertura de Vacantes</td><td class="clave" rowspan="5">ICV</td><td class="franq total-row">Total</td><td class="num total-row">80.0%</td><td class="num total-row">86.0%</td><td class="num total-row">87.0%</td><td class="meta-col total-row">0.0%</td><td class="total-row">—</td><td class="wkcell filled"><input class="wk" value="0.6925" data-key="3-0" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.9675" data-key="3-0" data-w="1"></td><td class="wkcell filled"><input class="wk" value="1.06" data-key="3-0" data-w="2"></td><td class="wkcell filled"><input class="wk" value="0" data-key="3-0" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="3-0" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="3-0" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="3-0" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="3-0" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="3-0" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="3-0" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="3-0" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="3-0" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="3-0" data-w="12"></td><td class="prom" data-prom="3-0">68.0%</td><td class="pct" data-pct="3-0">—</td><td data-status="3-0"><span class="status-pill nd">—</span></td></tr><tr><td class="franq ">México</td><td class="num ">82.0%</td><td class="num ">85.0%</td><td class="num ">87.0%</td><td class="meta-col ">0.0%</td><td class="">JOSE MARIA</td><td class="wkcell filled"><input class="wk" value="0.78" data-key="3-1" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.78" data-key="3-1" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="3-1" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="3-1" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="3-1" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="3-1" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="3-1" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="3-1" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="3-1" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="3-1" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="3-1" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="3-1" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="3-1" data-w="12"></td><td class="prom" data-prom="3-1">78.0%</td><td class="pct" data-pct="3-1">—</td><td data-status="3-1"><span class="status-pill nd">—</span></td></tr><tr><td class="franq ">Perú</td><td class="num ">90.0%</td><td class="num ">93.0%</td><td class="num ">97.0%</td><td class="meta-col ">0.0%</td><td class="">JOSE MARIA</td><td class="wkcell filled"><input class="wk" value="0.99" data-key="3-2" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.97" data-key="3-2" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="3-2" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="3-2" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="3-2" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="3-2" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="3-2" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="3-2" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="3-2" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="3-2" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="3-2" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="3-2" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="3-2" data-w="12"></td><td class="prom" data-prom="3-2">98.0%</td><td class="pct" data-pct="3-2">—</td><td data-status="3-2"><span class="status-pill nd">—</span></td></tr><tr><td class="franq ">Colombia</td><td class="num ">92.0%</td><td class="num ">87.0%</td><td class="num ">91.0%</td><td class="meta-col ">0.0%</td><td class="">JOSE MARIA</td><td class="wkcell filled"><input class="wk" value="0" data-key="3-3" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.92" data-key="3-3" data-w="1"></td><td class="wkcell filled"><input class="wk" value="0.92" data-key="3-3" data-w="2"></td><td class="wkcell filled"><input class="wk" value="0" data-key="3-3" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="3-3" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="3-3" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="3-3" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="3-3" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="3-3" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="3-3" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="3-3" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="3-3" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="3-3" data-w="12"></td><td class="prom" data-prom="3-3">46.0%</td><td class="pct" data-pct="3-3">—</td><td data-status="3-3"><span class="status-pill nd">—</span></td></tr><tr><td class="franq ">Filipinas</td><td class="num ">55.0%</td><td class="num ">80.0%</td><td class="num ">100.0%</td><td class="meta-col ">0.0%</td><td class="">JOSE MARIA</td><td class="wkcell filled"><input class="wk" value="1" data-key="3-4" data-w="0"></td><td class="wkcell filled"><input class="wk" value="1.2" data-key="3-4" data-w="1"></td><td class="wkcell filled"><input class="wk" value="1.2" data-key="3-4" data-w="2"></td><td class="wkcell filled"><input class="wk" value="0" data-key="3-4" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="3-4" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="3-4" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="3-4" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="3-4" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="3-4" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="3-4" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="3-4" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="3-4" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="3-4" data-w="12"></td><td class="prom" data-prom="3-4">85.0%</td><td class="pct" data-pct="3-4">—</td><td data-status="3-4"><span class="status-pill nd">—</span></td></tr><tr><td class="kpi-name" rowspan="5">Ingresos de operación (millones MXN)</td><td class="clave" rowspan="5">ING</td><td class="franq total-row">Total</td><td class="num total-row">2,187</td><td class="num total-row">586</td><td class="num total-row">633</td><td class="meta-col total-row">668</td><td class="total-row">—</td><td class="wkcell filled"><input class="wk" value="44.34" data-key="4-0" data-w="0"></td><td class="wkcell filled"><input class="wk" value="43.32" data-key="4-0" data-w="1"></td><td class="wkcell filled"><input class="wk" value="0.61" data-key="4-0" data-w="2"></td><td class="wkcell filled"><input class="wk" value="0.49" data-key="4-0" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="4-0" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="4-0" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="4-0" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="4-0" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="4-0" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="4-0" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="4-0" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="4-0" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="4-0" data-w="12"></td><td class="prom" data-prom="4-0">22.2</td><td class="pct" data-pct="4-0">—</td><td data-status="4-0"><span class="status-pill nd">—</span></td></tr><tr><td class="franq ">México</td><td class="num ">1,795</td><td class="num ">468</td><td class="num ">503</td><td class="meta-col ">519</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="36.49" data-key="4-1" data-w="0"></td><td class="wkcell filled"><input class="wk" value="35.23" data-key="4-1" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="4-1" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="4-1" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="4-1" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="4-1" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="4-1" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="4-1" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="4-1" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="4-1" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="4-1" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="4-1" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="4-1" data-w="12"></td><td class="prom" data-prom="4-1">35.9</td><td class="pct" data-pct="4-1">—</td><td data-status="4-1"><span class="status-pill nd">—</span></td></tr><tr><td class="franq ">Perú</td><td class="num ">319</td><td class="num ">95</td><td class="num ">106</td><td class="meta-col ">80</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="7.2" data-key="4-2" data-w="0"></td><td class="wkcell filled"><input class="wk" value="7.44" data-key="4-2" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="4-2" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="4-2" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="4-2" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="4-2" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="4-2" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="4-2" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="4-2" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="4-2" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="4-2" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="4-2" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="4-2" data-w="12"></td><td class="prom" data-prom="4-2">7.3</td><td class="pct" data-pct="4-2">—</td><td data-status="4-2"><span class="status-pill nd">—</span></td></tr><tr><td class="franq ">Colombia</td><td class="num ">72</td><td class="num ">20</td><td class="num ">19</td><td class="meta-col ">24</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="0.18" data-key="4-3" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.18" data-key="4-3" data-w="1"></td><td class="wkcell filled"><input class="wk" value="0.13" data-key="4-3" data-w="2"></td><td class="wkcell filled"><input class="wk" value="0" data-key="4-3" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="4-3" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="4-3" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="4-3" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="4-3" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="4-3" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="4-3" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="4-3" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="4-3" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="4-3" data-w="12"></td><td class="prom" data-prom="4-3">0.1</td><td class="pct" data-pct="4-3">—</td><td data-status="4-3"><span class="status-pill nd">—</span></td></tr><tr><td class="franq ">Filipinas</td><td class="num ">1</td><td class="num ">3</td><td class="num ">4</td><td class="meta-col ">9</td><td class="">ZULMA VILLAR</td><td class="wkcell filled"><input class="wk" value="0.47" data-key="4-4" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.46" data-key="4-4" data-w="1"></td><td class="wkcell filled"><input class="wk" value="0.48" data-key="4-4" data-w="2"></td><td class="wkcell filled"><input class="wk" value="0.49" data-key="4-4" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="4-4" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="4-4" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="4-4" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="4-4" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="4-4" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="4-4" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="4-4" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="4-4" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="4-4" data-w="12"></td><td class="prom" data-prom="4-4">0.5</td><td class="pct" data-pct="4-4">—</td><td data-status="4-4"><span class="status-pill nd">—</span></td></tr><tr><td class="kpi-name" rowspan="5">Desembolsos tradicionales en ruta</td><td class="clave" rowspan="5">DTR</td><td class="franq total-row">Total</td><td class="num total-row">1,523,781</td><td class="num total-row">341,784</td><td class="num total-row">365,864</td><td class="meta-col total-row">30,258.3</td><td class="total-row">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="26926" data-key="5-0" data-w="0"></td><td class="wkcell filled"><input class="wk" value="26682" data-key="5-0" data-w="1"></td><td class="wkcell filled"><input class="wk" value="1906" data-key="5-0" data-w="2"></td><td class="wkcell filled"><input class="wk" value="213" data-key="5-0" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="5-0" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="5-0" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="5-0" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="5-0" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="5-0" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="5-0" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="5-0" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="5-0" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="5-0" data-w="12"></td><td class="prom" data-prom="5-0">13,931.8</td><td class="pct" data-pct="5-0">46%</td><td data-status="5-0"><span class="status-pill fail">❌</span></td></tr><tr><td class="franq ">México</td><td class="num ">1,244,698</td><td class="num ">273,737</td><td class="num ">293,050</td><td class="meta-col ">24,526.92</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="22188" data-key="5-1" data-w="0"></td><td class="wkcell filled"><input class="wk" value="21628" data-key="5-1" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="5-1" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="5-1" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="5-1" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="5-1" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="5-1" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="5-1" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="5-1" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="5-1" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="5-1" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="5-1" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="5-1" data-w="12"></td><td class="prom" data-prom="5-1">21,908</td><td class="pct" data-pct="5-1">89%</td><td data-status="5-1"><span class="status-pill fail">❌</span></td></tr><tr><td class="franq ">Perú</td><td class="num ">205,602</td><td class="num ">43,801</td><td class="num ">45,220</td><td class="meta-col ">3,174.24</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="2703" data-key="5-2" data-w="0"></td><td class="wkcell filled"><input class="wk" value="2869" data-key="5-2" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="5-2" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="5-2" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="5-2" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="5-2" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="5-2" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="5-2" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="5-2" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="5-2" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="5-2" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="5-2" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="5-2" data-w="12"></td><td class="prom" data-prom="5-2">2,786</td><td class="pct" data-pct="5-2">88%</td><td data-status="5-2"><span class="status-pill fail">❌</span></td></tr><tr><td class="franq ">Colombia</td><td class="num ">68,625</td><td class="num ">16,075</td><td class="num ">17,344</td><td class="meta-col ">1,614.66</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="1174" data-key="5-3" data-w="0"></td><td class="wkcell filled"><input class="wk" value="1341" data-key="5-3" data-w="1"></td><td class="wkcell filled"><input class="wk" value="1025" data-key="5-3" data-w="2"></td><td class="wkcell filled"><input class="wk" value="0" data-key="5-3" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="5-3" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="5-3" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="5-3" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="5-3" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="5-3" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="5-3" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="5-3" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="5-3" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="5-3" data-w="12"></td><td class="prom" data-prom="5-3">885</td><td class="pct" data-pct="5-3">55%</td><td data-status="5-3"><span class="status-pill fail">❌</span></td></tr><tr><td class="franq ">Filipinas</td><td class="num ">4,856</td><td class="num ">8,171</td><td class="num ">10,250</td><td class="meta-col ">942.48</td><td class="">ZULMA VILLAR</td><td class="wkcell filled"><input class="wk" value="861" data-key="5-4" data-w="0"></td><td class="wkcell filled"><input class="wk" value="844" data-key="5-4" data-w="1"></td><td class="wkcell filled"><input class="wk" value="881" data-key="5-4" data-w="2"></td><td class="wkcell filled"><input class="wk" value="213" data-key="5-4" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="5-4" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="5-4" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="5-4" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="5-4" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="5-4" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="5-4" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="5-4" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="5-4" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="5-4" data-w="12"></td><td class="prom" data-prom="5-4">699.8</td><td class="pct" data-pct="5-4">74%</td><td data-status="5-4"><span class="status-pill fail">❌</span></td></tr><tr><td class="kpi-name" rowspan="5">Desembolsos digitales en ruta</td><td class="clave" rowspan="5">DDR</td><td class="franq total-row">Total</td><td class="num total-row">546</td><td class="num total-row">6,988</td><td class="num total-row">9,312</td><td class="meta-col total-row">1,156.8</td><td class="total-row">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="998" data-key="6-0" data-w="0"></td><td class="wkcell filled"><input class="wk" value="1024" data-key="6-0" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="6-0" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="6-0" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="6-0" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="6-0" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="6-0" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="6-0" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="6-0" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="6-0" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="6-0" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="6-0" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="6-0" data-w="12"></td><td class="prom" data-prom="6-0">1,011</td><td class="pct" data-pct="6-0">87%</td><td data-status="6-0"><span class="status-pill fail">❌</span></td></tr><tr><td class="franq ">México</td><td class="num ">0</td><td class="num ">0</td><td class="num ">0</td><td class="meta-col ">—</td><td class="">—</td><td class="wkcell"><input class="wk" value="" data-key="6-1" data-w="0"></td><td class="wkcell"><input class="wk" value="" data-key="6-1" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="6-1" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="6-1" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="6-1" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="6-1" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="6-1" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="6-1" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="6-1" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="6-1" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="6-1" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="6-1" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="6-1" data-w="12"></td><td class="prom" data-prom="6-1">—</td><td class="pct" data-pct="6-1">—</td><td data-status="6-1"><span class="status-pill nd">—</span></td></tr><tr><td class="franq ">Perú</td><td class="num ">546</td><td class="num ">6,988</td><td class="num ">9,312</td><td class="meta-col ">1,156.8</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="998" data-key="6-2" data-w="0"></td><td class="wkcell filled"><input class="wk" value="1024" data-key="6-2" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="6-2" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="6-2" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="6-2" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="6-2" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="6-2" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="6-2" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="6-2" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="6-2" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="6-2" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="6-2" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="6-2" data-w="12"></td><td class="prom" data-prom="6-2">1,011</td><td class="pct" data-pct="6-2">87%</td><td data-status="6-2"><span class="status-pill fail">❌</span></td></tr><tr><td class="franq ">Colombia</td><td class="num ">0</td><td class="num ">0</td><td class="num ">0</td><td class="meta-col ">—</td><td class="">—</td><td class="wkcell"><input class="wk" value="" data-key="6-3" data-w="0"></td><td class="wkcell"><input class="wk" value="" data-key="6-3" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="6-3" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="6-3" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="6-3" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="6-3" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="6-3" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="6-3" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="6-3" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="6-3" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="6-3" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="6-3" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="6-3" data-w="12"></td><td class="prom" data-prom="6-3">—</td><td class="pct" data-pct="6-3">—</td><td data-status="6-3"><span class="status-pill nd">—</span></td></tr><tr><td class="franq ">Filipinas</td><td class="num ">0</td><td class="num ">0</td><td class="num ">0</td><td class="meta-col ">—</td><td class="">—</td><td class="wkcell"><input class="wk" value="" data-key="6-4" data-w="0"></td><td class="wkcell"><input class="wk" value="" data-key="6-4" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="6-4" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="6-4" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="6-4" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="6-4" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="6-4" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="6-4" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="6-4" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="6-4" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="6-4" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="6-4" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="6-4" data-w="12"></td><td class="prom" data-prom="6-4">—</td><td class="pct" data-pct="6-4">—</td><td data-status="6-4"><span class="status-pill nd">—</span></td></tr><tr><td class="kpi-name" rowspan="5">Desembolsos digitales en ilana App</td><td class="clave" rowspan="5">DDi</td><td class="franq total-row">Total</td><td class="num total-row">14,540</td><td class="num total-row">13,395</td><td class="num total-row">20,017</td><td class="meta-col total-row">2,384.2</td><td class="total-row">ZULMA VILLAR</td><td class="wkcell filled"><input class="wk" value="1797" data-key="7-0" data-w="0"></td><td class="wkcell filled"><input class="wk" value="1830" data-key="7-0" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="7-0" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="7-0" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="7-0" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="7-0" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="7-0" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="7-0" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="7-0" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="7-0" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="7-0" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="7-0" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="7-0" data-w="12"></td><td class="prom" data-prom="7-0">1,813.5</td><td class="pct" data-pct="7-0">76%</td><td data-status="7-0"><span class="status-pill fail">❌</span></td></tr><tr><td class="franq ">México</td><td class="num ">14,540</td><td class="num ">13,395</td><td class="num ">20,017</td><td class="meta-col ">2,384.2</td><td class="">ZULMA VILLAR</td><td class="wkcell filled"><input class="wk" value="1797" data-key="7-1" data-w="0"></td><td class="wkcell filled"><input class="wk" value="1830" data-key="7-1" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="7-1" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="7-1" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="7-1" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="7-1" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="7-1" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="7-1" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="7-1" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="7-1" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="7-1" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="7-1" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="7-1" data-w="12"></td><td class="prom" data-prom="7-1">1,813.5</td><td class="pct" data-pct="7-1">76%</td><td data-status="7-1"><span class="status-pill fail">❌</span></td></tr><tr><td class="franq ">Perú</td><td class="num ">0</td><td class="num ">0</td><td class="num ">0</td><td class="meta-col ">—</td><td class="">—</td><td class="wkcell"><input class="wk" value="" data-key="7-2" data-w="0"></td><td class="wkcell"><input class="wk" value="" data-key="7-2" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="7-2" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="7-2" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="7-2" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="7-2" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="7-2" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="7-2" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="7-2" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="7-2" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="7-2" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="7-2" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="7-2" data-w="12"></td><td class="prom" data-prom="7-2">—</td><td class="pct" data-pct="7-2">—</td><td data-status="7-2"><span class="status-pill nd">—</span></td></tr><tr><td class="franq ">Colombia</td><td class="num ">0</td><td class="num ">0</td><td class="num ">0</td><td class="meta-col ">—</td><td class="">—</td><td class="wkcell"><input class="wk" value="" data-key="7-3" data-w="0"></td><td class="wkcell"><input class="wk" value="" data-key="7-3" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="7-3" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="7-3" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="7-3" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="7-3" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="7-3" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="7-3" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="7-3" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="7-3" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="7-3" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="7-3" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="7-3" data-w="12"></td><td class="prom" data-prom="7-3">—</td><td class="pct" data-pct="7-3">—</td><td data-status="7-3"><span class="status-pill nd">—</span></td></tr><tr><td class="franq ">Filipinas</td><td class="num ">0</td><td class="num ">0</td><td class="num ">0</td><td class="meta-col ">—</td><td class="">—</td><td class="wkcell"><input class="wk" value="" data-key="7-4" data-w="0"></td><td class="wkcell"><input class="wk" value="" data-key="7-4" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="7-4" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="7-4" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="7-4" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="7-4" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="7-4" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="7-4" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="7-4" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="7-4" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="7-4" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="7-4" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="7-4" data-w="12"></td><td class="prom" data-prom="7-4">—</td><td class="pct" data-pct="7-4">—</td><td data-status="7-4"><span class="status-pill nd">—</span></td></tr><tr><td class="kpi-name" rowspan="5">Recolección de pagos digitales</td><td class="clave" rowspan="5">RPD</td><td class="franq total-row">Total</td><td class="num total-row">—</td><td class="num total-row">15,819</td><td class="num total-row">194,605</td><td class="meta-col total-row">21,078.2</td><td class="total-row">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="16732" data-key="8-0" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0" data-key="8-0" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="8-0" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="8-0" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="8-0" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="8-0" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="8-0" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="8-0" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="8-0" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="8-0" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="8-0" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="8-0" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="8-0" data-w="12"></td><td class="prom" data-prom="8-0">8,366</td><td class="pct" data-pct="8-0">40%</td><td data-status="8-0"><span class="status-pill fail">❌</span></td></tr><tr><td class="franq ">México</td><td class="num ">0</td><td class="num ">0</td><td class="num ">0</td><td class="meta-col ">—</td><td class="">—</td><td class="wkcell"><input class="wk" value="" data-key="8-1" data-w="0"></td><td class="wkcell"><input class="wk" value="" data-key="8-1" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="8-1" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="8-1" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="8-1" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="8-1" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="8-1" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="8-1" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="8-1" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="8-1" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="8-1" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="8-1" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="8-1" data-w="12"></td><td class="prom" data-prom="8-1">—</td><td class="pct" data-pct="8-1">—</td><td data-status="8-1"><span class="status-pill nd">—</span></td></tr><tr><td class="franq ">Perú</td><td class="num ">—</td><td class="num ">15,819</td><td class="num ">194,605</td><td class="meta-col ">21,078.2</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="16732" data-key="8-2" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0" data-key="8-2" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="8-2" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="8-2" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="8-2" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="8-2" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="8-2" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="8-2" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="8-2" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="8-2" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="8-2" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="8-2" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="8-2" data-w="12"></td><td class="prom" data-prom="8-2">8,366</td><td class="pct" data-pct="8-2">40%</td><td data-status="8-2"><span class="status-pill fail">❌</span></td></tr><tr><td class="franq ">Colombia</td><td class="num ">0</td><td class="num ">0</td><td class="num ">0</td><td class="meta-col ">—</td><td class="">—</td><td class="wkcell"><input class="wk" value="" data-key="8-3" data-w="0"></td><td class="wkcell"><input class="wk" value="" data-key="8-3" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="8-3" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="8-3" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="8-3" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="8-3" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="8-3" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="8-3" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="8-3" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="8-3" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="8-3" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="8-3" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="8-3" data-w="12"></td><td class="prom" data-prom="8-3">—</td><td class="pct" data-pct="8-3">—</td><td data-status="8-3"><span class="status-pill nd">—</span></td></tr><tr><td class="franq ">Filipinas</td><td class="num ">0</td><td class="num ">0</td><td class="num ">0</td><td class="meta-col ">—</td><td class="">—</td><td class="wkcell"><input class="wk" value="" data-key="8-4" data-w="0"></td><td class="wkcell"><input class="wk" value="" data-key="8-4" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="8-4" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="8-4" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="8-4" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="8-4" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="8-4" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="8-4" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="8-4" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="8-4" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="8-4" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="8-4" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="8-4" data-w="12"></td><td class="prom" data-prom="8-4">—</td><td class="pct" data-pct="8-4">—</td><td data-status="8-4"><span class="status-pill nd">—</span></td></tr><tr><td class="kpi-name" rowspan="5">Porcentaje de líderes grandiosas y valiosas</td><td class="clave" rowspan="5">PLG</td><td class="franq total-row">Total</td><td class="num total-row">45.0%</td><td class="num total-row">47.0%</td><td class="num total-row">46.0%</td><td class="meta-col total-row">60.1%</td><td class="total-row">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="0.5632" data-key="9-0" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.551" data-key="9-0" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="9-0" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="9-0" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="9-0" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="9-0" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="9-0" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="9-0" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="9-0" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="9-0" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="9-0" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="9-0" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="9-0" data-w="12"></td><td class="prom" data-prom="9-0">55.7%</td><td class="pct" data-pct="9-0">93%</td><td data-status="9-0"><span class="status-pill risk">⚠️</span></td></tr><tr><td class="franq ">México</td><td class="num ">46.5%</td><td class="num ">46.0%</td><td class="num ">47.0%</td><td class="meta-col ">62.5%</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="0.5884" data-key="9-1" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.5654" data-key="9-1" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="9-1" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="9-1" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="9-1" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="9-1" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="9-1" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="9-1" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="9-1" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="9-1" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="9-1" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="9-1" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="9-1" data-w="12"></td><td class="prom" data-prom="9-1">57.7%</td><td class="pct" data-pct="9-1">92%</td><td data-status="9-1"><span class="status-pill risk">⚠️</span></td></tr><tr><td class="franq ">Perú</td><td class="num ">48.0%</td><td class="num ">52.0%</td><td class="num ">44.0%</td><td class="meta-col ">69.2%</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="0.6476" data-key="9-2" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.6321" data-key="9-2" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="9-2" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="9-2" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="9-2" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="9-2" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="9-2" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="9-2" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="9-2" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="9-2" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="9-2" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="9-2" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="9-2" data-w="12"></td><td class="prom" data-prom="9-2">64.0%</td><td class="pct" data-pct="9-2">92%</td><td data-status="9-2"><span class="status-pill risk">⚠️</span></td></tr><tr><td class="franq ">Colombia</td><td class="num ">27.0%</td><td class="num ">32.0%</td><td class="num ">32.0%</td><td class="meta-col ">48.8%</td><td class="">LUIS ENRIQUE</td><td class="wkcell filled"><input class="wk" value="0.4537" data-key="9-3" data-w="0"></td><td class="wkcell filled"><input class="wk" value="0.4556" data-key="9-3" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="9-3" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="9-3" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="9-3" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="9-3" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="9-3" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="9-3" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="9-3" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="9-3" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="9-3" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="9-3" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="9-3" data-w="12"></td><td class="prom" data-prom="9-3">45.5%</td><td class="pct" data-pct="9-3">93%</td><td data-status="9-3"><span class="status-pill risk">⚠️</span></td></tr><tr><td class="franq ">Filipinas</td><td class="num ">0.0%</td><td class="num ">0.0%</td><td class="num ">0.0%</td><td class="meta-col ">—</td><td class="">—</td><td class="wkcell"><input class="wk" value="" data-key="9-4" data-w="0"></td><td class="wkcell"><input class="wk" value="" data-key="9-4" data-w="1"></td><td class="wkcell"><input class="wk" value="" data-key="9-4" data-w="2"></td><td class="wkcell"><input class="wk" value="" data-key="9-4" data-w="3"></td><td class="wkcell"><input class="wk" value="" data-key="9-4" data-w="4"></td><td class="wkcell"><input class="wk" value="" data-key="9-4" data-w="5"></td><td class="wkcell"><input class="wk" value="" data-key="9-4" data-w="6"></td><td class="wkcell"><input class="wk" value="" data-key="9-4" data-w="7"></td><td class="wkcell"><input class="wk" value="" data-key="9-4" data-w="8"></td><td class="wkcell"><input class="wk" value="" data-key="9-4" data-w="9"></td><td class="wkcell"><input class="wk" value="" data-key="9-4" data-w="10"></td><td class="wkcell"><input class="wk" value="" data-key="9-4" data-w="11"></td><td class="wkcell"><input class="wk" value="" data-key="9-4" data-w="12"></td><td class="prom" data-prom="9-4">—</td><td class="pct" data-pct="9-4">—</td><td data-status="9-4"><span class="status-pill nd">—</span></td></tr></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="21">OBJETIVOS EN META (Total)</td>
+            <td colspan="3" class="count" id="totalCount">0 de 8</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <p class="note">
+    <b>Cómo usar:</b> escribe los valores de cada semana (S1–S13) directamente en las celdas.
+    El <b>Promedio Trim.</b>, el <b>% vs Meta</b> y el <b>Estado</b> (semáforo) se calculan solos.
+    Usa <b>Guardar cambios</b> para conservar los datos en este navegador, o <b>Exportar datos</b>
+    para generar un archivo que puedas compartir con terceros (ellos lo abren con <b>Importar datos</b>).
+    <br>Criterio del semáforo: ≥100% de la meta = En Meta · 90–99% = En Riesgo · &lt;90% = Fuera de Meta.
+  </p>
+
+</div>
+
+<script>
+/* ================= DATOS BASE (extraídos del Excel) ================= */
+const BASE = {
+  titulo: "SCORECARD SEMANAL — COMITÉ ESTRATÉGICO  |  VISTA TRIMESTRAL (13 SEMANAS)",
+  kpis: [
+    {name:"Indice de productividad", clave:"IP", fmt:"pct", rows:[
+      {f:"Total",    anual:null,   q1:null,   q2:null,   meta:null},
+      {f:"México",   anual:0.8022, q1:0.7741, q2:0.732,  meta:"-1%", resp:"LUIS ENRIQUE"},
+      {f:"Perú",     anual:0.8874, q1:0.8577, q2:0.8219, meta:"-1%", resp:"LUIS ENRIQUE"},
+      {f:"Colombia", anual:0.7299, q1:0.7065, q2:0.6977, meta:"-1%", resp:"LUIS ENRIQUE"},
+      {f:"Filipinas",anual:0.9466, q1:0.9017, q2:0.7845, meta:"+3%", resp:"ZULMA VILLAR"},
+    ]},
+    {name:"IP Digital", clave:"IPD", fmt:"pct", rows:[
+      {f:"Total",    anual:0.8811, q1:0.869, q2:0.8564, meta:-0.01, resp:"ZULMA VILLAR"},
+      {f:"México",   anual:0.8811, q1:0.869, q2:0.8564, meta:-0.01, resp:"ZULMA VILLAR"},
+      {f:"Perú",     anual:0, q1:0, q2:0, meta:0},
+      {f:"Colombia", anual:0, q1:0, q2:0, meta:0},
+      {f:"Filipinas",anual:0, q1:0, q2:0, meta:0},
+    ]},
+    {name:"Crecimiento en clientes vigentes", clave:"CCV", fmt:"int", rows:[
+      {f:"Total",    anual:351865, q1:366994, q2:367109, meta:27102},
+      {f:"México",   anual:282246, q1:294328, q2:293885, meta:17500, resp:"LUIS ENRIQUE"},
+      {f:"Perú",     anual:48916,  q1:49965,  q2:48944,  meta:3028,  resp:"LUIS ENRIQUE"},
+      {f:"Colombia", anual:15975,  q1:15355,  q2:15675,  meta:2701,  resp:"LUIS ENRIQUE"},
+      {f:"Filipinas",anual:3828,   q1:7346,   q2:8605,   meta:3873,  resp:"ZULMA VILLAR"},
+    ]},
+    {name:"Indice de cobertura de Vacantes", clave:"ICV", fmt:"pct", rows:[
+      {f:"Total",    anual:0.80, q1:0.86, q2:0.87, meta:null},
+      {f:"México",   anual:0.82, q1:0.85, q2:0.87, meta:"+5%", resp:"JOSE MARIA"},
+      {f:"Perú",     anual:0.90, q1:0.93, q2:0.97, meta:"+1%", resp:"JOSE MARIA"},
+      {f:"Colombia", anual:0.92, q1:0.87, q2:0.91, meta:"+2%", resp:"JOSE MARIA"},
+      {f:"Filipinas",anual:0.55, q1:0.80, q2:1.00, meta:"+5%", resp:"JOSE MARIA"},
+    ]},
+    {name:"Ingresos de operación (millones MXN)", clave:"ING", fmt:"raw", rows:[
+      {f:"Total",    anual:"2,187", q1:"586", q2:"633", meta:"668"},
+      {f:"México",   anual:"1,795", q1:"468", q2:"503", meta:"519", resp:"LUIS ENRIQUE"},
+      {f:"Perú",     anual:"319",   q1:"95",  q2:"106", meta:"80",  resp:"LUIS ENRIQUE"},
+      {f:"Colombia", anual:"72",    q1:"20",  q2:"19",  meta:"24",  resp:"LUIS ENRIQUE"},
+      {f:"Filipinas",anual:"1",     q1:"3",   q2:"4",   meta:"9",   resp:"ZULMA VILLAR"},
+    ]},
+    {name:"Desembolsos tradicionales en ruta", clave:"DTR", fmt:"int", rows:[
+      {f:"Total",    anual:1523781, q1:341784, q2:365864, meta:"+2%", resp:"LUIS ENRIQUE"},
+      {f:"México",   anual:1244698, q1:273737, q2:293050, meta:"+2%", resp:"LUIS ENRIQUE"},
+      {f:"Perú",     anual:205602,  q1:43801,  q2:45220,  meta:"+2%", resp:"LUIS ENRIQUE"},
+      {f:"Colombia", anual:68625,   q1:16075,  q2:17344,  meta:"+2%", resp:"LUIS ENRIQUE"},
+      {f:"Filipinas",anual:4856,    q1:8171,   q2:10250,  meta:"+2%", resp:"ZULMA VILLAR"},
+    ]},
+    {name:"Desembolsos digitales en ruta", clave:"DDR", fmt:"int", rows:[
+      {f:"Total",    anual:546, q1:6988, q2:9312, meta:"+20%", resp:"LUIS ENRIQUE"},
+      {f:"México",   anual:0, q1:0, q2:0, meta:0},
+      {f:"Perú",     anual:546, q1:6988, q2:9312, meta:"+20%", resp:"LUIS ENRIQUE"},
+      {f:"Colombia", anual:0, q1:0, q2:0, meta:0},
+      {f:"Filipinas",anual:0, q1:0, q2:0, meta:0},
+    ]},
+    {name:"Desembolsos digitales en ilana App", clave:"DDi", fmt:"int", rows:[
+      {f:"Total",    anual:14540, q1:13395, q2:20017, meta:"+30%", resp:"ZULMA VILLAR"},
+      {f:"México",   anual:14540, q1:13395, q2:20017, meta:"+30%", resp:"ZULMA VILLAR"},
+      {f:"Perú",     anual:0, q1:0, q2:0, meta:0},
+      {f:"Colombia", anual:0, q1:0, q2:0, meta:0},
+      {f:"Filipinas",anual:0, q1:0, q2:0, meta:0},
+    ]},
+    {name:"Recolección de pagos digitales", clave:"RPD", fmt:"int", rows:[
+      {f:"Total",    anual:"-", q1:15819, q2:194605, meta:"+30%", resp:"LUIS ENRIQUE"},
+      {f:"México",   anual:0, q1:0, q2:0, meta:0},
+      {f:"Perú",     anual:"-", q1:15819, q2:194605, meta:"+30%", resp:"LUIS ENRIQUE"},
+      {f:"Colombia", anual:0, q1:0, q2:0, meta:0},
+      {f:"Filipinas",anual:0, q1:0, q2:0, meta:0},
+    ]},
+    {name:"Porcentaje de líderes grandiosas y valiosas", clave:"PLG", fmt:"pct", rows:[
+      {f:"Total",    anual:0.45,   q1:0.47, q2:0.46, meta:null, resp:"LUIS ENRIQUE"},
+      {f:"México",   anual:0.4646, q1:0.46, q2:0.47, meta:"+1%", resp:"LUIS ENRIQUE"},
+      {f:"Perú",     anual:0.48,   q1:0.52, q2:0.44, meta:"+3%", resp:"LUIS ENRIQUE"},
+      {f:"Colombia", anual:0.27,   q1:0.32, q2:0.32, meta:"+3%", resp:"LUIS ENRIQUE"},
+      {f:"Filipinas",anual:0, q1:0, q2:0, meta:0},
+    ]},
+  ]
+};
+const NWK = 13;
+const STORE_KEY = "scorecard_comite_v1";
+
+/* ====== datos incrustados y modo solo-lectura (los rellena "Generar link") ====== */
+const EMBEDDED_DATA = {"periodo":"Q3 2026 (04/Jul – 25/Jul/2026)","fecha":"2026-07-21","weeks":{"0-1":[0.8203,0.8107,"","","","","","","","","","",""],"0-2":[0.8664,0.8588,"","","","","","","","","","",""],"0-3":[0.7868,0.7865,0.7908,0.7458,"","","","","","","","",""],"0-4":[0.8281,0.82,0.812,0.7996,"","","","","","","","",""],"0-0":[0.8254,0.819,0.8014,0.7727,"","","","","","","","",""],"1-1":[0.8607,0.8502,"","","","","","","","","","",""],"1-2":[0.9218,0.9156,"","","","","","","","","","",""],"1-3":[0.7868,0.7865,0.7908,0.7458,"","","","","","","","",""],"1-4":[0.8281,0.82,0.812,0.7996,"","","","","","","","",""],"1-0":[0.8494,0.8431,0.8014,0.7727,"","","","","","","","",""],"2-1":[290876,288279,"","","","","","","","","","",""],"2-2":[48382,47985,"","","","","","","","","","",""],"2-3":[15518,15697,13420,15022,"","","","","","","","",""],"2-4":[8596,8676,8719,8624,"","","","","","","","",""],"2-0":[363372,360637,22139,23646,"","","","","","","","",""],"3-1":[0.78,0.78,"","","","","","","","","","",""],"3-2":[0.99,0.97,"","","","","","","","","","",""],"3-3":[0,0.92,0.92,0,"","","","","","","","",""],"3-4":[1,1.2,1.2,0,"","","","","","","","",""],"3-0":[0.6925,0.9675,1.06,0,"","","","","","","","",""],"4-1":[36.49,35.23,"","","","","","","","","","",""],"4-2":[7.2,7.44,"","","","","","","","","","",""],"4-3":[0.18,0.18,0.13,0,"","","","","","","","",""],"4-4":[0.47,0.46,0.48,0.49,"","","","","","","","",""],"4-0":[44.34,43.32,0.61,0.49,"","","","","","","","",""],"5-1":[22188,21628,"","","","","","","","","","",""],"5-2":[2703,2869,"","","","","","","","","","",""],"5-3":[1174,1341,1025,0,"","","","","","","","",""],"5-4":[861,844,881,213,"","","","","","","","",""],"5-0":[26926,26682,1906,213,"","","","","","","","",""],"6-1":["","","","","","","","","","","","",""],"6-2":[998,1024,"","","","","","","","","","",""],"6-3":["","","","","","","","","","","","",""],"6-4":["","","","","","","","","","","","",""],"6-0":[998,1024,"","","","","","","","","","",""],"7-1":[1797,1830,"","","","","","","","","","",""],"7-2":["","","","","","","","","","","","",""],"7-3":["","","","","","","","","","","","",""],"7-4":["","","","","","","","","","","","",""],"7-0":[1797,1830,"","","","","","","","","","",""],"8-1":["","","","","","","","","","","","",""],"8-2":[16732,0,"","","","","","","","","","",""],"8-3":["","","","","","","","","","","","",""],"8-4":["","","","","","","","","","","","",""],"8-0":[16732,0,"","","","","","","","","","",""],"9-1":[0.5884,0.5654,"","","","","","","","","","",""],"9-2":[0.6476,0.6321,"","","","","","","","","","",""],"9-3":[0.4537,0.4556,"","","","","","","","","","",""],"9-4":["","","","","","","","","","","","",""],"9-0":[0.5632,0.551,"","","","","","","","","","",""]},"metas":{"0-1":0.8242,"0-2":0.8651,"0-3":0.7868,"0-4":0.8623,"0-0":0.8346,"1-1":0.8626,"1-2":null,"1-3":null,"1-4":null,"1-0":0.8626,"2-1":311385,"2-2":51972,"2-3":18380,"2-4":12476,"2-0":394213,"3-1":0,"3-2":0,"3-3":0,"3-4":0,"3-0":0,"4-1":null,"4-2":null,"4-3":null,"4-4":null,"4-0":null,"5-1":24526.92,"5-2":3174.24,"5-3":1614.66,"5-4":942.48,"5-0":30258.3,"6-1":null,"6-2":1156.8,"6-3":null,"6-4":null,"6-0":1156.8,"7-1":2384.2,"7-2":null,"7-3":null,"7-4":null,"7-0":2384.2,"8-1":null,"8-2":21078.2,"8-3":null,"8-4":null,"8-0":21078.2,"9-1":0.6247,"9-2":0.692,"9-3":0.4875,"9-4":null,"9-0":0.6014}};   /*__EMBED__*/
+const READ_ONLY     = true;  /*__READONLY__*/
+
+/* ============ estado de captura de semanas + meta ============ */
+let state = { periodo:"", fecha:"", weeks:{} }; // weeks["kpiIdx-rowIdx"] = [13 valores]
+
+/* ============ helpers de formato ============ */
+function fmtVal(v, fmt){
+  if(v===null||v===undefined||v==="") return "—";
+  if(v==="-") return "—";
+  if(fmt==="pct" && typeof v==="number") return (v*100).toFixed(1)+"%";
+  if(fmt==="int" && typeof v==="number") return v.toLocaleString("es-MX");
+  if(typeof v==="number") return v.toLocaleString("es-MX");
+  return v;
+}
+function fmtMeta(m){
+  if(m===null||m===undefined||m==="") return "—";
+  if(m===0||m==="0") return "—";
+  if(typeof m==="number") return (m*100).toFixed(0)+"%";
+  return m;
+}
+/* meta objetivo numérica para comparar contra el promedio.
+   Si la meta es "+X%" o "-X%" se interpreta sobre Q2 anterior.
+   Si la meta es un número absoluto (>1) se usa tal cual. */
+function metaObjetivo(row){
+  const m=row.meta, base=(typeof row.q2==="number")?row.q2:null;
+  if(m===null||m===undefined||m===""||m===0||m==="0") return null;
+  if(typeof m==="string" && m.trim().match(/^[+-]?\d+(\.\d+)?%$/)){
+    const pct=parseFloat(m.replace("%",""))/100;
+    if(base===null) return null;
+    return base*(1+pct);
+  }
+  if(typeof m==="number"){
+    if(Math.abs(m)<1 && base!==null) return base*(1+m); // fracción tipo -0.01
+    return m; // absoluto
+  }
+  return null;
+}
+
+/* metas calculadas que vienen del data.json (mandan sobre las de texto).
+   METAS_CALC["ki-ri"] = número objetivo, o null. */
+let METAS_CALC = {};
+function objetivoDe(ki, ri, row){
+  const k = ki+"-"+ri;
+  if(METAS_CALC && (k in METAS_CALC) && METAS_CALC[k]!==null && METAS_CALC[k]!=="")
+    return METAS_CALC[k];
+  return metaObjetivo(row);   // respaldo: metas de texto embebidas en BASE
+}
+
+/* ============ render ============ */
+function render(){
+  document.getElementById("titleBar").textContent = BASE.titulo;
+  // week head
+  const wr=document.getElementById("weekHeadRow");
+  wr.innerHTML="";
+  for(let i=1;i<=NWK;i++){
+    const th=document.createElement("th");
+    th.className="sub"; th.textContent="S"+i; wr.appendChild(th);
+  }
+  const tb=document.getElementById("tbody");
+  tb.innerHTML="";
+  BASE.kpis.forEach((kpi,ki)=>{
+    kpi.rows.forEach((row,ri)=>{
+      const tr=document.createElement("tr");
+      const isTotal = row.f==="Total";
+      if(ri===0){
+        const nameTd=document.createElement("td");
+        nameTd.className="kpi-name"; nameTd.rowSpan=kpi.rows.length;
+        nameTd.textContent=kpi.name; tr.appendChild(nameTd);
+        const clTd=document.createElement("td");
+        clTd.className="clave"; clTd.rowSpan=kpi.rows.length;
+        clTd.textContent=kpi.clave; tr.appendChild(clTd);
+      }
+      const cls = isTotal ? "total-row" : "";
+      const key=ki+"-"+ri;
+      const metaCalc = (METAS_CALC && (key in METAS_CALC)) ? METAS_CALC[key] : null;
+      tr.innerHTML += `<td class="franq ${cls}">${row.f}</td>`;
+      tr.innerHTML += `<td class="num ${cls}">${fmtVal(row.anual,kpi.fmt)}</td>`;
+      tr.innerHTML += `<td class="num ${cls}">${fmtVal(row.q1,kpi.fmt)}</td>`;
+      tr.innerHTML += `<td class="num ${cls}">${fmtVal(row.q2,kpi.fmt)}</td>`;
+      tr.innerHTML += `<td class="meta-col ${cls}">${
+        metaCalc!==null && metaCalc!=="" ? fmtVal(metaCalc,kpi.fmt) : fmtMeta(row.meta)
+      }</td>`;
+      tr.innerHTML += `<td class="${cls}">${row.resp||"—"}</td>`;
+
+      const wvals = state.weeks[key] || Array(NWK).fill("");
+      for(let w=0;w<NWK;w++){
+        const v = wvals[w];
+        const filled = (v!==""&&v!==null&&v!==undefined) ? " filled" : "";
+        const vAttr = (v!==""&&v!==null&&v!==undefined) ? String(v) : "";
+        tr.innerHTML += `<td class="wkcell${filled}"><input class="wk" `+
+          `value="${vAttr}" data-key="${key}" data-w="${w}"></td>`;
+      }
+      // Promedio, % vs meta, estado
+      tr.innerHTML += `<td class="prom" data-prom="${key}">—</td>`;
+      tr.innerHTML += `<td class="pct" data-pct="${key}">—</td>`;
+      tr.innerHTML += `<td data-status="${key}"><span class="status-pill nd">—</span></td>`;
+      tb.appendChild(tr);
+      computeRow(ki,ri);
+    });
+  });
+  // enlazar la captura por delegación (los inputs se crean vía innerHTML)
+  tb.oninput = function(e){
+    if(e.target && e.target.classList.contains("wk")) onWeekInput(e);
+  };
+  updateTotal();
+}
+
+function onWeekInput(e){
+  const key=e.target.dataset.key, w=+e.target.dataset.w;
+  if(!state.weeks[key]) state.weeks[key]=Array(NWK).fill("");
+  state.weeks[key][w]=e.target.value.trim();
+  e.target.parentElement.classList.toggle("filled", e.target.value.trim()!=="");
+  const [ki,ri]=key.split("-").map(Number);
+  computeRow(ki,ri); updateTotal(); markDirty();
+}
+
+function computeRow(ki,ri){
+  const key=ki+"-"+ri;
+  const kpi=BASE.kpis[ki], row=kpi.rows[ri];
+  const raw=(state.weeks[key]||[]);
+  const vals=raw.map(x=>parseFloat(String(x).replace(/,/g,"")))
+                .filter(x=>!isNaN(x));
+  const promEl=document.querySelector(`[data-prom="${key}"]`);
+  const pctEl=document.querySelector(`[data-pct="${key}"]`);
+  const stEl=document.querySelector(`[data-status="${key}"]`);
+  if(vals.length===0){
+    promEl.textContent="—"; pctEl.textContent="—";
+    stEl.innerHTML='<span class="status-pill nd">—</span>';
+    return;
+  }
+  // KPIs de stock (CCV): el valor representativo es el ÚLTIMO capturado, no el promedio
+  const esStock = STOCK_KPIS.includes(kpi.clave);
+  const repVal = esStock ? vals[vals.length-1]
+                         : vals.reduce((a,b)=>a+b,0)/vals.length;
+  promEl.textContent = kpi.fmt==="pct" ? (repVal*100).toFixed(1)+"%"
+                     : repVal.toLocaleString("es-MX",{maximumFractionDigits:1});
+  const obj=objetivoDe(ki,ri,row);
+  if(obj===null||obj===0){
+    pctEl.textContent="—";
+    stEl.innerHTML='<span class="status-pill nd">—</span>';
+    return;
+  }
+  const pct=repVal/obj;
+  pctEl.textContent=(pct*100).toFixed(0)+"%";
+  let cl="fail",tx="❌";
+  if(pct>=1){cl="meta-ok";tx="✅";}
+  else if(pct>=0.9){cl="risk";tx="⚠️";}
+  stEl.innerHTML=`<span class="status-pill ${cl}">${tx}</span>`;
+}
+const STOCK_KPIS = ["CCV"];   // KPIs cuyo valor es un stock (se evalúa el último dato)
+
+function updateTotal(){
+  // cuenta KPIs (fila Total) en meta
+  let inMeta=0, evaluables=0;
+  BASE.kpis.forEach((kpi,ki)=>{
+    const key=ki+"-0"; // fila Total
+    const st=document.querySelector(`[data-status="${key}"] .status-pill`);
+    if(st && !st.classList.contains("nd")){
+      evaluables++;
+      if(st.classList.contains("meta-ok")) inMeta++;
+    }
+  });
+  document.getElementById("totalCount").textContent =
+    `${inMeta} de ${evaluables||BASE.kpis.length}`;
+}
+
+/* ============ persistencia ============ */
+let dirty=false;
+function markDirty(){ dirty=true; }
+function collect(){
+  state.periodo=document.getElementById("periodo").value;
+  state.fecha=document.getElementById("fecha").value;
+  if(METAS_CALC && Object.keys(METAS_CALC).length) state.metas=METAS_CALC;
+  return state;
+}
+function saveData(){
+  collect();
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); dirty=false;
+       flash("Cambios guardados en este navegador ✔"); }
+  catch(e){ flash("No se pudo guardar (almacenamiento no disponible)"); }
+}
+function loadData(){
+  if(EMBEDDED_DATA){                       // versión publicada: usa datos incrustados
+    state=JSON.parse(JSON.stringify(EMBEDDED_DATA));
+    if(!state.weeks)state.weeks={};
+    if(EMBEDDED_DATA.metas) METAS_CALC=EMBEDDED_DATA.metas;
+  }else{
+    try{
+      const raw=localStorage.getItem(STORE_KEY);
+      if(raw){ state=JSON.parse(raw); if(!state.weeks)state.weeks={};
+               if(state.metas) METAS_CALC=state.metas; }
+    }catch(e){}
+  }
+  document.getElementById("periodo").value=state.periodo||"";
+  document.getElementById("fecha").value=state.fecha||"";
+}
+function exportJSON(){
+  collect();
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download="scorecard_datos.json"; a.click();
+  URL.revokeObjectURL(url);
+}
+function importJSON(ev){
+  const file=ev.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      state=JSON.parse(reader.result); if(!state.weeks)state.weeks={};
+      loadData(); render(); flash("Datos importados ✔");
+    }catch(e){ flash("Archivo inválido"); }
+  };
+  reader.readAsText(file); ev.target.value="";
+}
+function resetData(){
+  if(!confirm("¿Borrar todos los valores capturados de las semanas?"))return;
+  state.weeks={}; render(); markDirty();
+}
+function flash(msg){
+  const d=document.createElement("div");
+  d.textContent=msg;
+  d.style.cssText="position:fixed;bottom:22px;left:50%;transform:translateX(-50%);"+
+    "background:#1F3864;color:#fff;padding:10px 18px;border-radius:8px;"+
+    "font-size:13px;z-index:99;box-shadow:0 4px 12px rgba(0,0,0,.25)";
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),2200);
+}
+window.addEventListener("beforeunload",e=>{ if(dirty){e.preventDefault();e.returnValue="";} });
+
+/* ====== generar archivo publicable (solo lectura, datos incrustados) ====== */
+function generarPublicable(){
+  collect();
+  const html=document.documentElement.outerHTML;
+  const dataStr=JSON.stringify(state);
+  let out=html
+    .replace("const EMBEDDED_DATA = null;   /*__EMBED__*/",
+             "const EMBEDDED_DATA = "+dataStr+";   /*__EMBED__*/")
+    .replace("const READ_ONLY     = false;  /*__READONLY__*/",
+             "const READ_ONLY     = true;  /*__READONLY__*/");
+  out="<!DOCTYPE html>\n"+out;
+  const blob=new Blob([out],{type:"text/html"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download="index.html"; a.click();   // nombre listo para GitHub Pages
+  URL.revokeObjectURL(url);
+  flash("Archivo 'index.html' (publicado) generado — súbelo a GitHub ✔");
+}
+
+/* ====== aplicar modo solo-lectura si corresponde ====== */
+function aplicarReadOnly(){
+  if(!READ_ONLY) return;
+  document.querySelectorAll("input").forEach(i=>{
+    i.setAttribute("readonly","readonly");
+    i.style.pointerEvents="none";
+  });
+  const tb=document.querySelector(".toolbar");
+  if(tb) tb.style.display="none";
+  const banner=document.createElement("div");
+  banner.textContent="Vista de solo lectura — datos actualizados por el administrador";
+  banner.style.cssText="max-width:1500px;margin:10px auto 0;padding:6px 16px;"+
+    "font-size:12px;color:#1F3864;font-weight:bold;";
+  document.querySelector(".wrap").prepend(banner);
+}
+
+/* ====== init: intenta cargar data.json (generado por el notebook) ====== */
+async function init(){
+  if(EMBEDDED_DATA){
+    // versión publicada: datos ya incrustados, no busca nada más
+    loadData();
+  }else{
+    // editor: intenta leer data.json junto al html (requiere abrir con Live Server / http)
+    try{
+      const resp=await fetch("data.json?v="+Date.now());
+      if(resp.ok){
+        const d=await resp.json();
+        if(d && d.weeks){
+          state={periodo:d.periodo||"", fecha:d.fecha||"", weeks:d.weeks};
+          if(d.metas){ METAS_CALC=d.metas; state.metas=d.metas; }
+          document.getElementById("periodo").value=state.periodo;
+          document.getElementById("fecha").value=state.fecha;
+          render(); aplicarReadOnly();
+          if(d.generado) flash("Datos cargados de data.json ("+d.generado+")");
+          return;
+        }
+      }
+    }catch(e){ /* sin servidor o sin data.json: usa localStorage */ }
+    loadData();
+  }
+  render();
+  aplicarReadOnly();
+}
+init();
+
+</script>
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
+
+
+</body></html>
